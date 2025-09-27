@@ -1,0 +1,59 @@
+## Игнорировать файлы сборки и выполнения ##
+bin/
+obj/
+publish/
+[Pp]roperties/
+[Dd]ebug/
+[Rr]elease/
+*.exe
+*.dll
+*.pdb
+*.cache
+
+## Файлы пользовательских настроек ##
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Файлы резервных копий ##
+*.backup
+*.bak
+*.tmp
+
+## Файлы пакетов NuGet ##
+packages/
+[Nn]u[Pp]ackages/
+*.nupkg
+.nuget/
+
+## Файлы операционной системы ##
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+## Файлы редактора кода ##
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+## Файлы тестирования ##
+TestResults/
+*.coverage
+*.coveragexml
+
+## Файлы журналов ##
+*.log
+*.log*
+logs/
+
+## Файлы временных данных ##
+temp/
+tmp/
+
+## Файлы проекта, но не исходный код ##
+*.csproj.user
+*.vbproj.user

@@ -1,9 +1,13 @@
+using MovingCursor.Core;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace CursorAutoMovement
+namespace MovingCursor
 {
-    class CursorMovement
+    class Cursor
     {
         [DllImport("User32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -18,8 +22,51 @@ namespace CursorAutoMovement
         private Point lastPosition;
         private Point center = new Point((int)(MonitorBounds.Right / 2), (int)(MonitorBounds.Bottom / 2));
         private bool isMonitoring = false;
+        
+        public void StartMonitoring()
+        {
+            isMonitoring = true;
+            GetCursorPos(out lastPosition);
+            Thread monitorThread = new Thread(Monitor);
+            monitorThread.IsBackground = true;
+            monitorThread.Start();
+        }
 
-        public async Task StartAutoCursorAsync(CancellationToken token)
+        public void StopMonitoring()
+        {
+            isMonitoring = false;
+        }
+
+        public void Dispose()
+        {
+            MouseMoved = null;
+        }
+
+        protected virtual void OnMoved(Point position)
+        {
+            MouseMoved?.Invoke(this, position);
+        }
+
+        private void Monitor()
+        {
+            int threshold = 10;
+
+            while (isMonitoring)
+            {
+                GetCursorPos(out Point currentPosition);
+
+                if (Math.Abs(currentPosition.X - lastPosition.X) > threshold ||
+                    Math.Abs(currentPosition.Y - lastPosition.Y) > threshold)
+                {
+                    OnMoved(currentPosition);
+                    lastPosition = currentPosition;
+                }
+
+                Thread.Sleep(50);
+            }
+        }
+
+        public async Task StartModeMoveAsync(CancellationToken token)
         {
             var config = ConfigReader.ReadConfig();
 
@@ -75,49 +122,7 @@ namespace CursorAutoMovement
                     throw new Exception($"Для мода {config.mode} не реализован метод для перемещения курсора");
             }
         }
-        public void StartMonitoring()
-        {
-            isMonitoring = true;
-            GetCursorPos(out lastPosition);
-            Thread monitorThread = new Thread(MonitorMouse);
-            monitorThread.IsBackground = true;
-            monitorThread.Start();
-        }
-
-        public void StopMonitoring()
-        {
-            isMonitoring = false;
-        }
-
-        public void Dispose()
-        {
-            MouseMoved = null;
-        }
-
-        protected virtual void OnMouseMoved(Point position)
-        {
-            MouseMoved?.Invoke(this, position);
-        }
-
-        private void MonitorMouse()
-        {
-            int threshold = 10;
-
-            while (isMonitoring)
-            {
-                GetCursorPos(out Point currentPosition);
-
-                if (Math.Abs(currentPosition.X - lastPosition.X) > threshold ||
-                    Math.Abs(currentPosition.Y - lastPosition.Y) > threshold)
-                {
-                    OnMouseMoved(currentPosition);
-                    lastPosition = currentPosition;
-                }
-
-                Thread.Sleep(50);
-            }
-        }
-
+        
         private async Task StartLockScreenAsync(int intervalMs, CancellationToken cancellationToken = default)
         {
             MoveTo(center.X, center.Y);
@@ -423,65 +428,6 @@ namespace CursorAutoMovement
             SetCursorPos(x, y);
             lastPosition.X = x;
             lastPosition.Y = y;
-        }
-
-    }
-
-    class MonitorBounds
-    {
-        [DllImport("user32.dll")]
-        private static extern int GetSystemMetrics(int nIndex);
-        private const int SM_CXSCREEN = 0;
-        private const int SM_CYSCREEN = 1;
-
-        public static int Left = 0;
-        public static int Top = 0;
-        public static int Right = GetSystemMetrics(SM_CXSCREEN);
-        public static int Bottom = GetSystemMetrics(SM_CYSCREEN);
-    }
-
-    class NativeMessageBox
-    {
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
-
-        public static void ShowError(string message)
-        {
-            MessageBox(IntPtr.Zero, message, "Ошибка", 0x00000010);
-        }
-    }
-
-    internal class Program
-    {
-        static async Task Main()
-        {
-            var cursor = new CursorMovement();
-            CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
-            CancellationToken token = cancelTokenSource.Token;
-
-            cursor.StartMonitoring();
-            cursor.MouseMoved += (s, p) =>
-            {
-                cancelTokenSource.Cancel();
-                return;
-            };
-
-            try
-            {
-                await cursor.StartAutoCursorAsync(token);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception except)
-            {
-                NativeMessageBox.ShowError(except.Message);
-            }
-            finally
-            {
-                cursor.StopMonitoring();
-                cursor.Dispose();
-            }
         }
 
     }
