@@ -1,4 +1,4 @@
-# Moving-the-cursor - Автоматическое перемещение курсора ![C#](https://img.shields.io/badge/C%23-9.0-purple?style=flat-square)![Platform](https://img.shields.io/badge/Windows-10%2F11-blue?style=flat-square)
+# Moving-the-cursor - Автоматическое перемещение курсора ![C#](https://img.shields.io/badge/C%23-9.0-purple?style=flat-square) ![Platform](https://img.shields.io/badge/Windows-10%2F11-blue?style=flat-square)
 
 Программа для автоматического перемещения курсора мыши по различным траекториям. Полезно для предотвращения блокировки экрана.
 
